@@ -1,0 +1,28 @@
+# Compiled output
+target/
+*.class
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Spring Boot
+application-local.properties
+application-*.properties
+!application.properties
+
+# Logs
+*.log
+
+# H2 database file (if you switch from in-memory to file-based)
+*.db
+*.mv.db
+*.trace.db

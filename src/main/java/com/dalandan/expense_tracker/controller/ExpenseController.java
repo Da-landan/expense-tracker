@@ -7,6 +7,7 @@ import com.dalandan.expense_tracker.repository.ExpenseRepository;
 import com.dalandan.expense_tracker.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class ExpenseController {
 
     @PostMapping("/expenses")
     public ResponseEntity<Expense> createExpense(
-            @RequestBody ExpenseRequest request
+            @Valid @RequestBody ExpenseRequest request
     ) {
 
         User user = userRepository.findById(request.getUserId())
@@ -65,7 +66,7 @@ public class ExpenseController {
     @PutMapping("/expenses/{id}")
     public ResponseEntity<Expense> updateExpense(
             @PathVariable Long id,
-            @RequestBody ExpenseRequest request
+            @Valid @RequestBody ExpenseRequest request
     ) {
 
         Expense expense = expenseRepository.findById(id)

@@ -11,8 +11,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ExpenseService {
@@ -78,8 +81,45 @@ public class ExpenseService {
                     );
         }
 
+        // Date range only
+        if (startDate != null && endDate != null) {
+            return expenseRepository
+                    .findByUserIdAndDateBetween(
+                            userId,
+                            startDate,
+                            endDate
+                    );
+        }
+
         // No filters
         return expenseRepository.findByUserId(userId);
+    }
+
+    public Map<String, BigDecimal> getMonthlySummary(LocalDate startDate, LocalDate endDate) {
+
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return null;
+        }
+
+        List<Expense> expenses = expenseRepository.findByUserIdAndDateBetween(
+                        currentUser.getId(),
+                        startDate,
+                        endDate
+                );
+
+        Map<String, BigDecimal> summary = new LinkedHashMap<>();
+
+        for (Expense expense : expenses) {
+
+            summary.merge(
+                    expense.getCategory(),
+                    expense.getAmount(),
+                    BigDecimal::add
+            );
+        }
+
+        return summary;
     }
 
     //POST METHODS

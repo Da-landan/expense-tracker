@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import com.dalandan.expense_tracker.service.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class ExpenseController {
@@ -49,6 +52,33 @@ public class ExpenseController {
         }
 
         return ResponseEntity.ok(expense);
+    }
+
+    @GetMapping("/expenses/summary")
+    public ResponseEntity<Map<String, BigDecimal>> getExpenseSummary(
+            @RequestParam(required = false) String month
+    ){
+
+        YearMonth targetMonth;
+
+        if (month == null || month.isBlank()) {
+            targetMonth = YearMonth.now();
+        } else {
+            targetMonth = YearMonth.parse(month);
+        }
+
+        LocalDate startDate = targetMonth.atDay(1);
+        LocalDate endDate = targetMonth.atEndOfMonth();
+
+        Map<String, BigDecimal> summary = expenseService.getMonthlySummary(startDate, endDate);
+
+        if (summary == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .build();
+        }
+
+        return ResponseEntity.ok(summary);
     }
 
     //POST

@@ -27,3 +27,4 @@ application-*.properties
 *.db
 *.mv.db
 *.trace.db
+data/

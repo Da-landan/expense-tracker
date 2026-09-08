@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -47,14 +48,38 @@ public class ExpenseService {
         return expense;
     }
 
-    public List<Expense> getExpensesForCurrentUser(){
+    public List<Expense> getExpensesForCurrentUser(String category, LocalDate startDate, LocalDate endDate){
         User currentUser = getCurrentUser();
-
         if (currentUser == null) {
             return null;
         }
 
-        return expenseRepository.findByUserId(currentUser.getId());
+        Long userId = currentUser.getId();
+
+        // Category + date range
+        if (category != null && startDate != null && endDate != null) {
+
+            return expenseRepository
+                    .findByUserIdAndCategoryAndDateBetween(
+                            userId,
+                            category,
+                            startDate,
+                            endDate
+                    );
+        }
+
+        // Category only
+        if (category != null) {
+
+            return expenseRepository
+                    .findByUserIdAndCategory(
+                            userId,
+                            category
+                    );
+        }
+
+        // No filters
+        return expenseRepository.findByUserId(userId);
     }
 
     //POST METHODS

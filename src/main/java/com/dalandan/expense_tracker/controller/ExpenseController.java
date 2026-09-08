@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import com.dalandan.expense_tracker.service.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -19,10 +20,15 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
 
+    //GET
     @GetMapping("/expenses")
-    public ResponseEntity<List<Expense>> getExpenses() {
+    public ResponseEntity<List<Expense>> getExpenses(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate
+    ) {
 
-        List<Expense> expenses = expenseService.getExpensesForCurrentUser();
+        List<Expense> expenses = expenseService.getExpensesForCurrentUser(category, startDate, endDate);
 
         if (expenses == null) {
             return ResponseEntity
@@ -45,6 +51,7 @@ public class ExpenseController {
         return ResponseEntity.ok(expense);
     }
 
+    //POST
     @PostMapping("/expenses")
     public ResponseEntity<Expense> createExpense(@Valid @RequestBody ExpenseRequest request) {
 
@@ -58,6 +65,7 @@ public class ExpenseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedExpense);
     }
 
+    //PUT
     @PutMapping("/expenses/{id}")
     public ResponseEntity<Expense> updateExpense(@PathVariable Long id, @Valid @RequestBody ExpenseRequest request) {
 
@@ -69,6 +77,7 @@ public class ExpenseController {
         return ResponseEntity.ok(updatedExpense);
     }
 
+    //DELETE
     @DeleteMapping("/expenses/{id}")
     public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
         boolean deleteSuccess = expenseService.deleteExpense(id);

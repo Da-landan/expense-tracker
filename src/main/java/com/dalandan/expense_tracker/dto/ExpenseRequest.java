@@ -1,7 +1,6 @@
 package com.dalandan.expense_tracker.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
@@ -9,7 +8,7 @@ import java.time.LocalDate;
 
 public class ExpenseRequest {
 
-    @NotNull @Positive(message = "Amount must be greater than 0")
+    @Positive(message = "Amount must be greater than 0")
     private BigDecimal amount;
 
     @NotBlank(message = "Category is required")
@@ -18,8 +17,6 @@ public class ExpenseRequest {
     private String description;
 
     private LocalDate date;
-
-    private Long userId;
 
     public BigDecimal getAmount() {
         return amount;
@@ -51,13 +48,5 @@ public class ExpenseRequest {
 
     public void setDate(LocalDate date) {
         this.date = date;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 }

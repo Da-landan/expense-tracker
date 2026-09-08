@@ -1,5 +1,8 @@
 package com.dalandan.expense_tracker.security;
 
+import com.dalandan.expense_tracker.model.User;
+import com.dalandan.expense_tracker.repository.UserRepository;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,9 +20,14 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationFilter(
+            JwtUtil jwtUtil,
+            UserRepository userRepository
+    ) {
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -39,16 +47,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 String username = jwtUtil.extractUsername(token);
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                Collections.emptyList()
-                        );
+                User user = userRepository.findByUsername(username)
+                        .orElse(null);
 
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authentication);
+                if (user != null) {
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    user.getUsername(),
+                                    null,
+                                    Collections.emptyList()
+                            );
+
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(authentication);
+                }
             }
         }
 

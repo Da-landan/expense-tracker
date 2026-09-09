@@ -1,6 +1,7 @@
 package com.dalandan.expense_tracker.service;
 
 import com.dalandan.expense_tracker.dto.ExpenseRequest;
+import com.dalandan.expense_tracker.exception.ResourceNotFoundException;
 import com.dalandan.expense_tracker.model.Expense;
 import com.dalandan.expense_tracker.model.User;
 import com.dalandan.expense_tracker.repository.ExpenseRepository;
@@ -34,18 +35,17 @@ public class ExpenseService {
         User currentUser = getCurrentUser();
 
         if (currentUser == null) {
-            return null;
+            throw new ResourceNotFoundException("User not found");
         }
 
         Expense expense = expenseRepository.findById(id)
-                .orElse(null);
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Expense not found")
+                );
 
-        if (expense == null) {
-            return null;
-        }
 
         if (!expense.getUser().getId().equals(currentUser.getId())) {
-            return null;
+            throw new ResourceNotFoundException("Expense not found");
         }
 
         return expense;

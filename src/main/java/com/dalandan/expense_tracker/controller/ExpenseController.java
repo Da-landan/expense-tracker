@@ -47,10 +47,6 @@ public class ExpenseController {
 
         Expense expense = expenseService.getExpenseById(id);
 
-        if (expense == null) {
-            return ResponseEntity.notFound().build();
-        }
-
         return ResponseEntity.ok(expense);
     }
 

@@ -35,9 +35,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleResourceNotFoundException(
-            ResourceNotFoundException exception
-    ) {
+    public ResponseEntity<ApiError> handleResourceNotFoundException(ResourceNotFoundException exception) {
 
         ApiError error = new ApiError(
                 HttpStatus.NOT_FOUND.value(),
@@ -45,9 +43,7 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(Exception.class)
@@ -63,6 +59,34 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(error);
+    }
+
+    @ExceptionHandler(DuplicateUserException.class)
+    public ResponseEntity<ApiError> handleDuplicateUserException(DuplicateUserException exception){
+
+        ApiError error = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                exception.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentialsException(InvalidCredentialsException exception){
+
+        ApiError error = new ApiError(
+                HttpStatus.UNAUTHORIZED.value(),
+                exception.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
                 .body(error);
     }
 }

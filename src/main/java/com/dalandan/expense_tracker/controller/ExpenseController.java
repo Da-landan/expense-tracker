@@ -33,12 +33,6 @@ public class ExpenseController {
 
         List<Expense> expenses = expenseService.getExpensesForCurrentUser(category, startDate, endDate);
 
-        if (expenses == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .build();
-        }
-
         return ResponseEntity.ok(expenses);
     }
 

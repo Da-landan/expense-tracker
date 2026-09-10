@@ -49,7 +49,6 @@ class ExpenseServiceTest {
         User user = mock(User.class);
 
         when(user.getId()).thenReturn(1L);
-        when(user.getUsername()).thenReturn("lance");
 
         Expense expense = mock(Expense.class);
         when(expense.getId()).thenReturn(10L);

@@ -1,4 +1,4 @@
-package com.dalandan.expense_tracker.security;
+package com.dalandan.expense_tracker.controller;
 
 import com.dalandan.expense_tracker.model.User;
 import com.dalandan.expense_tracker.repository.UserRepository;
@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,7 +17,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class AuthControllerTest {
+@ActiveProfiles("test")
+class AuthControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,10 +45,9 @@ class AuthControllerTest {
     }
 
     @Test
-    void loginReturnsUnauthorized_whenPasswordIsWrong()
-            throws Exception {
+    void loginFailsWithWrongPassword() throws Exception {
 
-        String json = """
+        String body = """
                 {
                     "username": "lance",
                     "password": "wrongPassword"
@@ -56,7 +57,7 @@ class AuthControllerTest {
         mockMvc.perform(
                         post("/auth/login")
                                 .contentType("application/json")
-                                .content(json)
+                                .content(body)
                 )
                 .andExpect(status().isUnauthorized());
     }

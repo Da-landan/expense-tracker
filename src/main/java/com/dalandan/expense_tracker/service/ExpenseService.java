@@ -54,7 +54,14 @@ public class ExpenseService {
     public List<Expense> getExpensesForCurrentUser(String category, LocalDate startDate, LocalDate endDate){
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            return null;
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        // Only one date was provided
+        if ((startDate == null) != (endDate == null)) {
+            throw new IllegalArgumentException(
+                    "Both startDate and endDate must be provided"
+            );
         }
 
         Long userId = currentUser.getId();
@@ -99,7 +106,19 @@ public class ExpenseService {
 
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            return null;
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException(
+                    "Start date and end date are required"
+            );
+        }
+
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException(
+                    "Start date cannot be after end date"
+            );
         }
 
         List<Expense> expenses = expenseRepository.findByUserIdAndDateBetween(
@@ -125,9 +144,8 @@ public class ExpenseService {
     //POST METHODS
     public Expense createExpense(ExpenseRequest request){
         User currentUser = getCurrentUser();
-
         if (currentUser == null) {
-            return null;
+            throw new ResourceNotFoundException("User not found");
         }
 
         Expense expense = new Expense(
@@ -146,18 +164,16 @@ public class ExpenseService {
         User currentUser = getCurrentUser();
 
         if (currentUser == null) {
-            return null;
+            throw new ResourceNotFoundException("User not found");
         }
 
-        Expense expense = expenseRepository.findById(id).orElse(null);
-
-        if (expense == null) {
-            return null;
-        }
+        Expense expense = expenseRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException("Expense not found")
+        );
 
         // Ownership check
         if (!expense.getUser().getId().equals(currentUser.getId())) {
-            return null;
+            throw new ResourceNotFoundException("Expense not found");
         }
 
         expense.setAmount(request.getAmount());
@@ -171,20 +187,16 @@ public class ExpenseService {
     //DELETE METHODS
     public boolean deleteExpense(Long id){
         User currentUser = getCurrentUser();
-
         if (currentUser == null) {
-            return false;
+            throw new ResourceNotFoundException("User not found");
         }
 
-        Expense expense = expenseRepository.findById(id).orElse(null);
-
-        if (expense == null) {
-            return false;
-        }
+        Expense expense = expenseRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException("Expense not found"));
 
         // Ownership check
         if (!expense.getUser().getId().equals(currentUser.getId())) {
-            return false;
+            throw new ResourceNotFoundException("Expense not found");
         }
 
         expenseRepository.deleteById(id);

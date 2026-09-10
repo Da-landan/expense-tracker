@@ -1,5 +1,6 @@
 package com.dalandan.expense_tracker.service;
 
+import com.dalandan.expense_tracker.dto.ExpenseRequest;
 import com.dalandan.expense_tracker.exception.ResourceNotFoundException;
 import com.dalandan.expense_tracker.model.Expense;
 import com.dalandan.expense_tracker.model.User;
@@ -10,12 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class ExpenseServiceTest {
 
@@ -89,4 +89,88 @@ class ExpenseServiceTest {
                 () -> expenseService.getExpenseById(99L)
         );
     }
+
+    @Test
+    void getExpenseById_throwsException_whenExpenseBelongsToAnotherUser() {
+
+        // Arrange
+        User currentUser = mock(User.class);
+        User otherUser = mock(User.class);
+        Expense expense = mock(Expense.class);
+
+        when(currentUser.getId()).thenReturn(1L);
+        when(otherUser.getId()).thenReturn(2L);
+
+        when(expense.getId()).thenReturn(10L);
+        when(expense.getUser()).thenReturn(otherUser);
+
+        when(userRepository.findByUsername("lance"))
+                .thenReturn(Optional.of(currentUser));
+
+        when(expenseRepository.findById(10L))
+                .thenReturn(Optional.of(expense));
+
+        // Act + Assert
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> expenseService.getExpenseById(10L)
+        );
+    }
+
+    @Test
+    void updateExpense_throwsException_whenExpenseBelongsToAnotherUser() {
+
+        User currentUser = mock(User.class);
+        User otherUser = mock(User.class);
+        Expense expense = mock(Expense.class);
+
+        when(currentUser.getId()).thenReturn(1L);
+        when(otherUser.getId()).thenReturn(2L);
+
+        when(expense.getUser()).thenReturn(otherUser);
+
+        when(userRepository.findByUsername("lance"))
+                .thenReturn(Optional.of(currentUser));
+
+        when(expenseRepository.findById(10L))
+                .thenReturn(Optional.of(expense));
+
+        ExpenseRequest request = new ExpenseRequest();
+        request.setAmount(new BigDecimal("500"));
+        request.setCategory("Food");
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> expenseService.updateExpense(10L, request)
+        );
+    }
+
+    @Test
+    void deleteExpense_fails_whenExpenseBelongsToAnotherUser() {
+
+        User currentUser = mock(User.class);
+        User otherUser = mock(User.class);
+        Expense expense = mock(Expense.class);
+
+        when(currentUser.getId()).thenReturn(1L);
+        when(otherUser.getId()).thenReturn(2L);
+
+        when(expense.getUser()).thenReturn(otherUser);
+
+        when(userRepository.findByUsername("lance"))
+                .thenReturn(Optional.of(currentUser));
+
+        when(expenseRepository.findById(10L))
+                .thenReturn(Optional.of(expense));
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> expenseService.deleteExpense(10L)
+        );
+
+        verify(expenseRepository, never())
+                .delete(any(Expense.class));
+    }
+
+
 }

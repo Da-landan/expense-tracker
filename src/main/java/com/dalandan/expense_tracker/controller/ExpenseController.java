@@ -48,25 +48,7 @@ public class ExpenseController {
     public ResponseEntity<Map<String, BigDecimal>> getExpenseSummary(
             @RequestParam(required = false) String month
     ){
-
-        YearMonth targetMonth;
-
-        if (month == null || month.isBlank()) {
-            targetMonth = YearMonth.now();
-        } else {
-            targetMonth = YearMonth.parse(month);
-        }
-
-        LocalDate startDate = targetMonth.atDay(1);
-        LocalDate endDate = targetMonth.atEndOfMonth();
-
-        Map<String, BigDecimal> summary = expenseService.getMonthlySummary(startDate, endDate);
-
-        if (summary == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .build();
-        }
+        Map<String, BigDecimal> summary = expenseService.getMonthlySummary(month);
 
         return ResponseEntity.ok(summary);
     }
@@ -77,11 +59,6 @@ public class ExpenseController {
 
         Expense savedExpense = expenseService.createExpense(request);
 
-        if (savedExpense == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .build();
-        }
         return ResponseEntity.status(HttpStatus.CREATED).body(savedExpense);
     }
 
@@ -90,9 +67,6 @@ public class ExpenseController {
     public ResponseEntity<Expense> updateExpense(@PathVariable Long id, @Valid @RequestBody ExpenseRequest request) {
 
         Expense updatedExpense = expenseService.updateExpense(id, request);
-        if (updatedExpense == null) {
-            return ResponseEntity.notFound().build();
-        }
 
         return ResponseEntity.ok(updatedExpense);
     }
@@ -100,11 +74,8 @@ public class ExpenseController {
     //DELETE
     @DeleteMapping("/expenses/{id}")
     public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
-        boolean deleteSuccess = expenseService.deleteExpense(id);
 
-        if(!deleteSuccess){
-            return ResponseEntity.notFound().build();
-        }
+        expenseService.deleteExpense(id);
 
         return ResponseEntity.noContent().build();
     }

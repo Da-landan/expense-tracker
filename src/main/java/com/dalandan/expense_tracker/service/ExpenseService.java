@@ -1,19 +1,19 @@
 package com.dalandan.expense_tracker.service;
 
 import com.dalandan.expense_tracker.dto.ExpenseRequest;
+import com.dalandan.expense_tracker.exception.InvalidCredentialsException;
 import com.dalandan.expense_tracker.exception.ResourceNotFoundException;
 import com.dalandan.expense_tracker.model.Expense;
 import com.dalandan.expense_tracker.model.User;
 import com.dalandan.expense_tracker.repository.ExpenseRepository;
 import com.dalandan.expense_tracker.repository.UserRepository;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ public class ExpenseService {
     public List<Expense> getExpensesForCurrentUser(String category, LocalDate startDate, LocalDate endDate){
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            throw new ResourceNotFoundException("User not found");
+            throw new InvalidCredentialsException("User not found");
         }
 
         // Only one date was provided
@@ -102,24 +102,27 @@ public class ExpenseService {
         return expenseRepository.findByUserId(userId);
     }
 
-    public Map<String, BigDecimal> getMonthlySummary(LocalDate startDate, LocalDate endDate) {
+    public Map<String, BigDecimal> getMonthlySummary(String month) {
 
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            throw new ResourceNotFoundException("User not found");
-        }
 
-        if (startDate == null || endDate == null) {
+        YearMonth targetMonth;
+
+        if (month == null || month.isBlank()) {
+            targetMonth = YearMonth.now();
+        } else {
+            try{
+                targetMonth = YearMonth.parse(month);
+            } catch (DateTimeParseException exception) {
             throw new IllegalArgumentException(
-                    "Start date and end date are required"
+                    "Month must use YYYY-MM format"
             );
         }
-
-        if (startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException(
-                    "Start date cannot be after end date"
-            );
+            targetMonth = YearMonth.parse(month);
         }
+
+        LocalDate startDate = targetMonth.atDay(1);
+        LocalDate endDate = targetMonth.atEndOfMonth();
 
         List<Expense> expenses = expenseRepository.findByUserIdAndDateBetween(
                         currentUser.getId(),
@@ -144,9 +147,6 @@ public class ExpenseService {
     //POST METHODS
     public Expense createExpense(ExpenseRequest request){
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            throw new ResourceNotFoundException("User not found");
-        }
 
         Expense expense = new Expense(
                 request.getAmount(),
@@ -162,10 +162,6 @@ public class ExpenseService {
     //PUT METHODS
     public Expense updateExpense(Long id, ExpenseRequest request){
         User currentUser = getCurrentUser();
-
-        if (currentUser == null) {
-            throw new ResourceNotFoundException("User not found");
-        }
 
         Expense expense = expenseRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException("Expense not found")
@@ -185,11 +181,8 @@ public class ExpenseService {
     }
 
     //DELETE METHODS
-    public boolean deleteExpense(Long id){
+    public void deleteExpense(Long id){
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            throw new ResourceNotFoundException("User not found");
-        }
 
         Expense expense = expenseRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException("Expense not found"));
@@ -200,8 +193,6 @@ public class ExpenseService {
         }
 
         expenseRepository.deleteById(id);
-
-        return true;
     }
 
     //HELPER METHOD
@@ -213,6 +204,8 @@ public class ExpenseService {
                 .getName();
 
         return userRepository.findByUsername(username)
-                .orElse(null);
+                .orElseThrow(() ->
+                        new InvalidCredentialsException("Invalid authentication")
+                );
     }
 }

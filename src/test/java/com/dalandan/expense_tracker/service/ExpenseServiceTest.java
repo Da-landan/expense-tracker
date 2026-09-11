@@ -1,6 +1,7 @@
 package com.dalandan.expense_tracker.service;
 
 import com.dalandan.expense_tracker.dto.ExpenseRequest;
+import com.dalandan.expense_tracker.dto.ExpenseResponse;
 import com.dalandan.expense_tracker.exception.ResourceNotFoundException;
 import com.dalandan.expense_tracker.model.Expense;
 import com.dalandan.expense_tracker.model.User;
@@ -61,7 +62,7 @@ class ExpenseServiceTest {
                 .thenReturn(Optional.of(expense));
 
         // Act
-        Expense result = expenseService.getExpenseById(10L);
+        ExpenseResponse result = expenseService.getExpenseById(10L);
 
         // Assert
         assertEquals(10L, result.getId());

@@ -1,12 +1,9 @@
 package com.dalandan.expense_tracker.service;
 
-import com.dalandan.expense_tracker.dto.ExpenseRequest;
-import com.dalandan.expense_tracker.exception.InvalidCredentialsException;
-import com.dalandan.expense_tracker.exception.ResourceNotFoundException;
-import com.dalandan.expense_tracker.model.Expense;
-import com.dalandan.expense_tracker.model.User;
-import com.dalandan.expense_tracker.repository.ExpenseRepository;
-import com.dalandan.expense_tracker.repository.UserRepository;
+import com.dalandan.expense_tracker.dto.*;
+import com.dalandan.expense_tracker.exception.*;
+import com.dalandan.expense_tracker.model.*;
+import com.dalandan.expense_tracker.repository.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -29,14 +26,10 @@ public class ExpenseService {
         this.userRepository = userRepository;
     }
 
-    //GET METHODS
-    public Expense getExpenseById(Long id) {
+    // --- GET METHODS ---
+    public ExpenseResponse getExpenseById(Long id) {
 
         User currentUser = getCurrentUser();
-
-        if (currentUser == null) {
-            throw new ResourceNotFoundException("User not found");
-        }
 
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() ->
@@ -48,14 +41,11 @@ public class ExpenseService {
             throw new ResourceNotFoundException("Expense not found");
         }
 
-        return expense;
+        return toResponse(expense);
     }
 
-    public List<Expense> getExpensesForCurrentUser(String category, LocalDate startDate, LocalDate endDate){
+    public List<ExpenseResponse> getExpensesForCurrentUser(String category, LocalDate startDate, LocalDate endDate){
         User currentUser = getCurrentUser();
-        if (currentUser == null) {
-            throw new InvalidCredentialsException("User not found");
-        }
 
         // Only one date was provided
         if ((startDate == null) != (endDate == null)) {
@@ -67,39 +57,37 @@ public class ExpenseService {
         Long userId = currentUser.getId();
 
         // Category + date range
-        if (category != null && startDate != null && endDate != null) {
-
-            return expenseRepository
-                    .findByUserIdAndCategoryAndDateBetween(
+        if (category != null && startDate != null) {
+            return toResponseList(
+                    expenseRepository.findByUserIdAndCategoryAndDateBetween(
                             userId,
                             category,
                             startDate,
                             endDate
-                    );
+                    ));
         }
 
         // Category only
         if (category != null) {
-
-            return expenseRepository
-                    .findByUserIdAndCategory(
+            return toResponseList(
+                    expenseRepository.findByUserIdAndCategory(
                             userId,
                             category
-                    );
+                    ));
         }
 
         // Date range only
         if (startDate != null && endDate != null) {
-            return expenseRepository
-                    .findByUserIdAndDateBetween(
+            return toResponseList(
+                    expenseRepository.findByUserIdAndDateBetween(
                             userId,
                             startDate,
                             endDate
-                    );
+                    ));
         }
 
         // No filters
-        return expenseRepository.findByUserId(userId);
+        return toResponseList(expenseRepository.findByUserId(userId));
     }
 
     public Map<String, BigDecimal> getMonthlySummary(String month) {
@@ -113,12 +101,10 @@ public class ExpenseService {
         } else {
             try{
                 targetMonth = YearMonth.parse(month);
-            } catch (DateTimeParseException exception) {
-            throw new IllegalArgumentException(
-                    "Month must use YYYY-MM format"
-            );
-        }
-            targetMonth = YearMonth.parse(month);
+            }
+            catch (DateTimeParseException exception) {
+                throw new IllegalArgumentException("Month must use YYYY-MM format");
+            }
         }
 
         LocalDate startDate = targetMonth.atDay(1);
@@ -144,8 +130,8 @@ public class ExpenseService {
         return summary;
     }
 
-    //POST METHODS
-    public Expense createExpense(ExpenseRequest request){
+    // ----POST METHODS ---
+    public ExpenseResponse createExpense(ExpenseRequest request){
         User currentUser = getCurrentUser();
 
         Expense expense = new Expense(
@@ -156,11 +142,14 @@ public class ExpenseService {
                 currentUser
         );
 
-        return expenseRepository.save(expense);
+        Expense savedExpense = expenseRepository.save(expense);
+
+
+        return toResponse(expense);
     }
 
-    //PUT METHODS
-    public Expense updateExpense(Long id, ExpenseRequest request){
+    // --- PUT METHODS ---
+    public ExpenseResponse updateExpense(Long id, ExpenseRequest request){
         User currentUser = getCurrentUser();
 
         Expense expense = expenseRepository.findById(id).orElseThrow(() ->
@@ -177,10 +166,12 @@ public class ExpenseService {
         expense.setDescription(request.getDescription());
         expense.setDate(request.getDate());
 
-        return expenseRepository.save(expense);
+        Expense savedExpense = expenseRepository.save(expense);
+
+        return toResponse(savedExpense);
     }
 
-    //DELETE METHODS
+    // --- DELETE METHODS ---
     public void deleteExpense(Long id){
         User currentUser = getCurrentUser();
 
@@ -207,5 +198,21 @@ public class ExpenseService {
                 .orElseThrow(() ->
                         new InvalidCredentialsException("Invalid authentication")
                 );
+    }
+
+    private ExpenseResponse toResponse(Expense expense) {
+        return new ExpenseResponse(
+                expense.getId(),
+                expense.getAmount(),
+                expense.getCategory(),
+                expense.getDescription(),
+                expense.getDate()
+        );
+    }
+
+    private List<ExpenseResponse> toResponseList(List<Expense> expenses) {
+        return expenses.stream()
+                .map(this::toResponse)
+                .toList();
     }
 }

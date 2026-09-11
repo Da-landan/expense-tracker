@@ -5,7 +5,7 @@ import com.dalandan.expense_tracker.dto.RegisterUserRequest;
 import com.dalandan.expense_tracker.model.User;
 import com.dalandan.expense_tracker.repository.UserRepository;
 import com.dalandan.expense_tracker.security.JwtUtil;
-import com.dalandan.expense_tracker.service.UserService;
+import com.dalandan.expense_tracker.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,65 +16,27 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final UserService userService;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final AuthService authService;
 
-    public AuthController(
-            UserService userService,
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil
-    ) {
-        this.userService = userService;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(
-            @Valid @RequestBody RegisterUserRequest request
-    ) {
-        User user = userService.register(
+    public ResponseEntity<User> register(@Valid @RequestBody RegisterUserRequest request) {
+        User user = authService.register(
                 request.getUsername(),
                 request.getEmail(),
                 request.getPassword()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(
-            @Valid @RequestBody LoginUserRequest request
-    ) {
+    public ResponseEntity<String> login(@Valid @RequestBody LoginUserRequest request) {
 
-        User user = userRepository
-                .findByUsername(request.getUsername())
-                .orElse(null);
-
-        if (user == null) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .build();
-        }
-
-        boolean passwordMatches = passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword()
-        );
-
-        if (!passwordMatches) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .build();
-        }
-
-        String token = jwtUtil.generateToken(user.getUsername());
+        String token = authService.userLogin(request);
 
         return ResponseEntity.ok(token);
     }

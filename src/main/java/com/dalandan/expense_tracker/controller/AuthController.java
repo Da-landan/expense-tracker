@@ -1,15 +1,10 @@
 package com.dalandan.expense_tracker.controller;
 
-import com.dalandan.expense_tracker.dto.LoginUserRequest;
-import com.dalandan.expense_tracker.dto.RegisterUserRequest;
-import com.dalandan.expense_tracker.model.User;
-import com.dalandan.expense_tracker.repository.UserRepository;
-import com.dalandan.expense_tracker.security.JwtUtil;
+import com.dalandan.expense_tracker.dto.*;
 import com.dalandan.expense_tracker.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,8 +18,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@Valid @RequestBody RegisterUserRequest request) {
-        User user = authService.register(
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterUserRequest request) {
+        UserResponse user = authService.register(
                 request.getUsername(),
                 request.getEmail(),
                 request.getPassword()
@@ -34,10 +29,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginUserRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginUserRequest request) {
 
-        String token = authService.userLogin(request);
+        AuthResponse authResponse = authService.userLogin(request);
 
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(authResponse);
     }
 }

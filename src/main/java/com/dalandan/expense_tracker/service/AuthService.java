@@ -1,6 +1,6 @@
 package com.dalandan.expense_tracker.service;
 
-import com.dalandan.expense_tracker.dto.LoginUserRequest;
+import com.dalandan.expense_tracker.dto.*;
 import com.dalandan.expense_tracker.exception.InvalidCredentialsException;
 import com.dalandan.expense_tracker.model.User;
 import com.dalandan.expense_tracker.repository.UserRepository;
@@ -23,7 +23,7 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
-    public User register(String username, String email, String rawPassword) {
+    public UserResponse register(String username, String email, String rawPassword) {
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Username already taken");
         }
@@ -36,10 +36,12 @@ public class AuthService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(rawPassword));
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        return toResponse(user);
     }
 
-    public String userLogin(LoginUserRequest request){
+    public AuthResponse userLogin(LoginUserRequest request){
 
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() ->
@@ -56,6 +58,15 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(user.getUsername());
 
-        return token;
+        return new AuthResponse(user.getUsername(), token);
+    }
+
+    // --- HELPER METHOD ---
+    private UserResponse toResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail()
+        );
     }
 }
